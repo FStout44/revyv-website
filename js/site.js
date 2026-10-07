@@ -95,10 +95,13 @@
         if(!r.ok) throw 0;
         return r.json();
       }).then(function(d){
-        if(String(d.success)!=='true') throw 0;
+        if(String(d.success)!=='true'){
+          if(/activat/i.test(d.message||'')) throw 'activate';
+          throw 0;
+        }
         form.reset();note.textContent="Thanks. We've got your details and will be in touch to set up a call.";note.className='form-note ok';
-      }).catch(function(){
-        note.textContent="That didn't send. Please try again in a moment.";note.className='form-note warn';
+      }).catch(function(why){
+        note.textContent=why==='activate'?"This form is waiting to be switched on. An activation email has been sent to the site owner.":"That didn't send. Please try again in a moment.";note.className='form-note warn';
       }).then(function(){btn.disabled=false});
     });
   }
