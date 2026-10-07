@@ -91,17 +91,15 @@
       if(!url){note.textContent="This form isn't connected yet, so nothing was sent.";note.className='form-note warn';return}
       var btn=form.querySelector('button');btn.disabled=true;note.textContent='Sending...';note.className='form-note';
       if(!form.reportValidity()){note.textContent='';btn.disabled=false;return}
-      fetch(url,{method:'POST',headers:{'Accept':'application/json'},body:new FormData(form)}).then(function(r){
-        if(!r.ok) throw 0;
-        return r.json();
+      var data={};new FormData(form).forEach(function(v,k){data[k]=v});
+      fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)}).then(function(r){
+        return r.json().catch(function(){throw 'The form service returned an unreadable reply (code '+r.status+').'});
       }).then(function(d){
-        if(String(d.success)!=='true'){
-          if(/activat/i.test(d.message||'')) throw 'activate';
-          throw 0;
-        }
+        if(String(d.success)!=='true') throw (d.message||'The form service did not accept the submission.');
         form.reset();note.textContent="Thanks. We've got your details and will be in touch to set up a call.";note.className='form-note ok';
       }).catch(function(why){
-        note.textContent=why==='activate'?"This form is waiting to be switched on. An activation email has been sent to the site owner.":"That didn't send. Please try again in a moment.";note.className='form-note warn';
+        var msg=typeof why==='string'?why:'The form service could not be reached.';
+        note.textContent=/activat/i.test(msg)?"This form is waiting to be switched on. An activation email has been sent to the site owner.":"That didn't send. "+msg;note.className='form-note warn';
       }).then(function(){btn.disabled=false});
     });
   }
